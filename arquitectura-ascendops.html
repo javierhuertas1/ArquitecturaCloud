@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AscendOps — Flujo de Arquitectura</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0f1527;
+    --bg3: #151c33;
+    --border: #1e2d52;
+    --accent: #3b82f6;
+    --accent2: #06b6d4;
+    --accent3: #8b5cf6;
+    --accent4: #10b981;
+    --accent5: #f59e0b;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --arrow: #334155;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 64px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.25);
+    padding: 4px 14px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+  }
+
+  .subtitle {
+    margin-top: 12px;
+    color: var(--text3);
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Section labels */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Flow layout */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Row */
+  .row {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .row:nth-child(1) { animation-delay: 0.1s; }
+  .row:nth-child(2) { animation-delay: 0.2s; }
+  .row:nth-child(3) { animation-delay: 0.3s; }
+  .row:nth-child(4) { animation-delay: 0.4s; }
+  .row:nth-child(5) { animation-delay: 0.5s; }
+  .row:nth-child(6) { animation-delay: 0.6s; }
+
+  /* Arrow between rows */
+  .arrow-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 48px;
+    position: relative;
+  }
+
+  .arrow-line {
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--border), rgba(59,130,246,0.4));
+    position: relative;
+  }
+
+  .arrow-line::after {
+    content: '▼';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--accent);
+    font-size: 10px;
+  }
+
+  /* Card */
+  .card {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.2s;
+    cursor: default;
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--card-accent, var(--accent));
+    opacity: 0.8;
+  }
+
+  .card.blue   { --card-accent: var(--accent); }
+  .card.cyan   { --card-accent: var(--accent2); }
+  .card.purple { --card-accent: var(--accent3); }
+  .card.green  { --card-accent: var(--accent4); }
+  .card.amber  { --card-accent: var(--accent5); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .card-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .card.blue   .card-icon { background: rgba(59,130,246,0.15); }
+  .card.cyan   .card-icon { background: rgba(6,182,212,0.15); }
+  .card.purple .card-icon { background: rgba(139,92,246,0.15); }
+  .card.green  .card-icon { background: rgba(16,185,129,0.15); }
+  .card.amber  .card-icon { background: rgba(245,158,11,0.15); }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .card-file {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 1px;
+  }
+
+  .card-body {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 9px;
+    border-radius: 100px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    white-space: nowrap;
+  }
+
+  .tag.hi {
+    background: rgba(59,130,246,0.1);
+    border-color: rgba(59,130,246,0.3);
+    color: #93c5fd;
+  }
+
+  .tag.hi.cyan {
+    background: rgba(6,182,212,0.1);
+    border-color: rgba(6,182,212,0.3);
+    color: #67e8f9;
+  }
+
+  .tag.hi.green {
+    background: rgba(16,185,129,0.1);
+    border-color: rgba(16,185,129,0.3);
+    color: #6ee7b7;
+  }
+
+  .tag.hi.amber {
+    background: rgba(245,158,11,0.1);
+    border-color: rgba(245,158,11,0.3);
+    color: #fcd34d;
+  }
+
+  .tag.hi.purple {
+    background: rgba(139,92,246,0.1);
+    border-color: rgba(139,92,246,0.3);
+    color: #c4b5fd;
+  }
+
+  /* Connector between cards in same row */
+  .h-arrow {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    color: var(--accent);
+    font-size: 12px;
+    gap: 4px;
+    padding: 0 4px;
+  }
+
+  .h-arrow-line {
+    width: 24px;
+    height: 1px;
+    background: linear-gradient(to right, var(--border), rgba(59,130,246,0.5));
+  }
+
+  /* Modules section */
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 0;
+  }
+
+  .module-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+
+  .module-card:hover {
+    border-color: var(--accent3);
+    transform: translateY(-2px);
+  }
+
+  .module-icon {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  .module-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent3);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .module-desc {
+    font-size: 11px;
+    color: var(--text3);
+    line-height: 1.4;
+  }
+
+  /* Notifications table */
+  .notif-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  .notif-table th {
+    text-align: left;
+    padding: 6px 10px;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 10px;
+  }
+
+  .notif-table td {
+    padding: 7px 10px;
+    color: var(--text2);
+    border-bottom: 1px solid rgba(30,45,82,0.5);
+    vertical-align: middle;
+  }
+
+  .notif-table tr:last-child td { border-bottom: none; }
+
+  .notif-table tr:hover td { background: rgba(59,130,246,0.04); }
+
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .pill.blue   { background: rgba(59,130,246,0.15); color: #93c5fd; }
+  .pill.cyan   { background: rgba(6,182,212,0.15);  color: #67e8f9; }
+  .pill.green  { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+  .pill.amber  { background: rgba(245,158,11,0.15); color: #fcd34d; }
+  .pill.red    { background: rgba(239,68,68,0.15);  color: #fca5a5; }
+
+  /* Environments row */
+  .env-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .env-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: border-color 0.3s;
+  }
+
+  .env-card:hover { border-color: var(--accent2); }
+
+  .env-name {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .env-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .env-account {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  .env-stage {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    margin-top: 4px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Drift alert */
+  .drift-alert {
+    background: rgba(239,68,68,0.07);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .drift-alert .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  .drift-alert p {
+    font-size: 12px;
+    color: #fca5a5;
+    line-height: 1.5;
+  }
+
+  .drift-alert strong { color: #f87171; }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 40px 0;
+  }
+
+  @media (max-width: 768px) {
+    .modules-grid, .env-grid { grid-template-columns: repeat(2, 1fr); }
+    .row { flex-direction: column; }
+    .h-arrow { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="badge">Terraform · AWS · CI/CD</div>
+    <h1>AscendOps — Flujo de Arquitectura</h1>
+    <p class="subtitle">TF_SCNDPS_BTCH · Diagrama de archivos y recursos</p>
+  </header>
+
+  <!-- STAGE 1: Pipeline -->
+  <div class="section-label">01 · Pipeline de CI/CD</div>
+  <div class="flow">
+
+    <div class="row">
+      <div class="card blue" style="flex:2">
+        <div class="card-header">
+          <div class="card-icon">⚙️</div>
+          <div>
+            <div class="card-title">.jenkins.yml</div>
+            <div class="card-file">Director de orquesta</div>
+          </div>
+        </div>
+        <div class="card-body">
+          Define el pipeline completo: qué rama va a qué cuenta AWS, ejecuta análisis de seguridad y lanza Terraform.
+        </div>
+        <div class="tag-list">
+          <span class="tag hi">SonarQube</span>
+          <span class="tag hi">Veracode</span>
+          <span class="tag hi cyan">ZIP glue-scripts</span>
+          <span class="tag hi amber">cp trunk/ → entorno/</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-row"><div class="arrow-line"></div></div>
+
+    <!-- Environments -->
+    <div class="section-label">02 · Entornos y Cuentas AWS</div>
+    <div class="env-grid" style="animation: fadeUp 0.5s ease 0.2s both;">
+      <div class="env-card">
+        <div class="env-name">
+          <div class="env-dot" style="background:#3b82f6"></div>
+          develop
+        </div>
+        <div class="env-account">229637605882</div>
+        <div class="env-stage" style="color:#3b82f6">stage = "dev"</div>
+      </div>
+      <div class="env-card">
+        <div class="env-name">
+          <div class="env-dot" style="background:#06b6d4"></div>
+          qa
+        </div>
+        <div class="env-account">229637605882</div>
+        <div class="env-stage" style="color:#06b6d4">stage = "qa"</div>
+      </div>
+      <div class="env-card">
+        <div class="env-name">
+          <div class="env-dot" style="background:#8b5cf6"></div>
+          demo
+        </div>
+        <div class="env-account">272486427612</div>
+        <div class="env-stage" style="color:#8b5cf6">stage = "stg"</div>
+      </div>
+      <div class="env-card">
+        <div class="env-name">
+          <div class="env-dot" style="background:#10b981"></div>
+          production
+        </div>
+        <div class="env-account">456140051001</div>
+        <div class="env-stage" style="color:#10b981">stage = "pro"</div>
+      </div>
+    </div>
+
+    <div class="arrow-row"><div class="arrow-line"></div></div>
+
+    <!-- STAGE 2: Terraform inputs -->
+    <div class="section-label">03 · Configuración de Terraform</div>
+    <div class="row">
+      <div class="card amber">
+        <div class="card-header">
+          <div class="card-icon">📄</div>
+          <div>
+            <div class="card-title">terraform.tfvars</div>
+            <div class="card-file">qa/terraform.tfvars</div>
+          </div>
+        </div>
+        <div class="card-body">Valores concretos del entorno. Alimenta a <code style="font-family:JetBrains Mono;font-size:10px;color:#fcd34d">variables.tf</code>.</div>
+        <div class="tag-list">
+          <span class="tag hi amber">stage = "qa"</span>
+          <span class="tag hi amber">bucket_prefix = "ascend-ops"</span>
+          <span class="tag hi amber">cross_account = true</span>
+          <span class="tag">lifecycle days</span>
+        </div>
+      </div>
+      <div class="h-arrow"><div class="h-arrow-line"></div>▶</div>
+      <div class="card blue">
+        <div class="card-header">
+          <div class="card-icon">📋</div>
+          <div>
+            <div class="card-title">variables.tf</div>
+            <div class="card-file">trunk/variables.tf</div>
+          </div>
+        </div>
+        <div class="card-body">Declara y valida las variables. Stage solo acepta: <code style="font-family:JetBrains Mono;font-size:10px;color:#93c5fd">dev, qa, tst, stg, pro</code>.</div>
+        <div class="tag-list">
+          <span class="tag">aws_region</span>
+          <span class="tag">stage</span>
+          <span class="tag">assume_role_arn</span>
+          <span class="tag">lifecycle rules</span>
+        </div>
+      </div>
+      <div class="h-arrow"><div class="h-arrow-line"></div>▶</div>
+      <div class="card cyan">
+        <div class="card-header">
+          <div class="card-icon">🔍</div>
+          <div>
+            <div class="card-title">data.tf</div>
+            <div class="card-file">trunk/data.tf</div>
+          </div>
+        </div>
+        <div class="card-body">Consulta a AWS: <em>"¿en qué cuenta estoy corriendo?"</em> y devuelve el <code style="font-family:JetBrains Mono;font-size:10px;color:#67e8f9">account_id</code> dinámicamente.</div>
+        <div class="tag-list">
+          <span class="tag hi cyan">aws_caller_identity</span>
+          <span class="tag hi cyan">account_id dinámico</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-row"><div class="arrow-line"></div></div>
+
+    <div class="row">
+      <div class="card purple" style="flex:1.2">
+        <div class="card-header">
+          <div class="card-icon">🧮</div>
+          <div>
+            <div class="card-title">locals.tf</div>
+            <div class="card-file">trunk/locals.tf</div>
+          </div>
+        </div>
+        <div class="card-body">Construye valores calculados combinando <code style="font-family:JetBrains Mono;font-size:10px;color:#c4b5fd">account_id</code> + <code style="font-family:JetBrains Mono;font-size:10px;color:#c4b5fd">stage</code>. Alimenta a todos los demás <code style="font-family:JetBrains Mono;font-size:10px;color:#c4b5fd">.tf</code>.</div>
+        <div class="tag-list">
+          <span class="tag hi purple">prefix = "pe-ascnd-qa"</span>
+          <span class="tag hi purple">glue_job_name</span>
+          <span class="tag">folder_suffixes</span>
+          <span class="tag">is_cross_account</span>
+          <span class="tag">config_map</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-row"><div class="arrow-line"></div></div>
+
+    <!-- STAGE 3: Resources -->
+    <div class="section-label">04 · Recursos AWS creados por Terraform</div>
+    <div class="row">
+      <div class="card green">
+        <div class="card-header">
+          <div class="card-icon">🪣</div>
+          <div>
+            <div class="card-title">s3.tf</div>
+            <div class="card-file">trunk/s3.tf</div>
+          </div>
+        </div>
+        <div class="card-body">Crea los buckets, permisos y notificaciones de eventos.</div>
+        <div class="tag-list">
+          <span class="tag hi green">glue_scripts_bucket</span>
+          <span class="tag hi green">source_bucket</span>
+          <span class="tag hi green">3× lambda_permission</span>
+          <span class="tag hi green">bucket_notification</span>
+          <span class="tag">lifecycle rules</span>
+          <span class="tag">bucket_folders</span>
+        </div>
+      </div>
+      <div class="h-arrow"><div class="h-arrow-line"></div>▶</div>
+      <div class="card blue">
+        <div class="card-header">
+          <div class="card-icon">λ</div>
+          <div>
+            <div class="card-title">lambda.tf</div>
+            <div class="card-file">trunk/lambda.tf</div>
+          </div>
+        </div>
+        <div class="card-body">Crea las funciones Lambda invocadas por los eventos S3.</div>
+        <div class="tag-list">
+          <span class="tag hi">job-launcher</span>
+          <span class="tag hi">start-invoice-process</span>
+          <span class="tag hi">output-mover</span>
+        </div>
+      </div>
+      <div class="h-arrow"><div class="h-arrow-line"></div>▶</div>
+      <div class="card amber">
+        <div class="card-header">
+          <div class="card-icon">⚡</div>
+          <div>
+            <div class="card-title">glue.tf</div>
+            <div class="card-file">trunk/glue.tf</div>
+          </div>
+        </div>
+        <div class="card-body">Crea los Glue Jobs que procesan los datos en S3.</div>
+        <div class="tag-list">
+          <span class="tag hi amber">glue_entry_job</span>
+          <span class="tag hi amber">glue_scripts_bucket</span>
+          <span class="tag">scripts/glue_entry_job.py</span>
+        </div>
+      </div>
+      <div class="h-arrow"><div class="h-arrow-line"></div>▶</div>
+      <div class="card cyan">
+        <div class="card-header">
+          <div class="card-icon">🔐</div>
+          <div>
+            <div class="card-title">iam.tf</div>
+            <div class="card-file">trunk/iam.tf</div>
+          </div>
+        </div>
+        <div class="card-body">Crea roles y políticas IAM para Lambda, Glue y acceso cross-account.</div>
+        <div class="tag-list">
+          <span class="tag hi cyan">roles IAM</span>
+          <span class="tag hi cyan">políticas</span>
+          <span class="tag">cross-account</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-row"><div class="arrow-line"></div></div>
+
+    <!-- Notifications detail -->
+    <div class="section-label">05 · Notificaciones de Eventos S3</div>
+    <div class="row">
+      <div class="card green" style="flex:1">
+        <div class="card-header">
+          <div class="card-icon">🔔</div>
+          <div>
+            <div class="card-title">aws_s3_bucket_notification</div>
+            <div class="card-file">on_upload_file — source_bucket</div>
+          </div>
+        </div>
+        <table class="notif-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Prefijo</th>
+              <th>Sufijo</th>
+              <th>Lambda destino</th>
+              <th>En código</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="pill blue">1</span></td>
+              <td>ascend-ops/entradas/</td>
+              <td>—</td>
+              <td>job-launcher</td>
+              <td><span class="pill green">✓ TF</span></td>
+            </tr>
+            <tr>
+              <td><span class="pill cyan">2</span></td>
+              <td>ascend-ops/salidas/</td>
+              <td>.log</td>
+              <td>start-invoice-process</td>
+              <td><span class="pill green">✓ TF</span></td>
+            </tr>
+            <tr>
+              <td><span class="pill green">3</span></td>
+              <td>output/peru/</td>
+              <td>.log</td>
+              <td>output-mover</td>
+              <td><span class="pill green">✓ TF</span></td>
+            </tr>
+            <tr>
+              <td><span class="pill amber">4</span></td>
+              <td>output/peru/</td>
+              <td>.out</td>
+              <td>output-mover</td>
+              <td><span class="pill red">✗ Manual</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="drift-alert">
+          <div class="icon">⚠️</div>
+          <p><strong>Terraform Drift detectado:</strong> La notificación #4 (<code style="font-family:JetBrains Mono;font-size:10px">.out</code>) existe en AWS pero no en el código Terraform. Fue creada manualmente en la consola.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-row"><div class="arrow-line"></div></div>
+
+    <!-- Modules -->
+    <div class="section-label">06 · Módulos Reutilizables (trunk/modules/)</div>
+    <div class="modules-grid" style="animation: fadeUp 0.5s ease 0.6s both;">
+      <div class="module-card">
+        <div class="module-icon">🪣</div>
+        <div class="module-name">s3_wrapper</div>
+        <div class="module-desc">Fábrica de buckets S3 con versioning, encriptación, lifecycle y políticas</div>
+      </div>
+      <div class="module-card">
+        <div class="module-icon">λ</div>
+        <div class="module-name">lambda_wrapper</div>
+        <div class="module-desc">Crea funciones Lambda con su rol IAM, variables de entorno y configuración</div>
+      </div>
+      <div class="module-card">
+        <div class="module-icon">🔐</div>
+        <div class="module-name">iam_wrapper</div>
+        <div class="module-desc">Crea roles y políticas IAM reutilizables con principio de mínimo privilegio</div>
+      </div>
+      <div class="module-card">
+        <div class="module-icon">🔑</div>
+        <div class="module-name">ssm_wrapper</div>
+        <div class="module-desc">Almacena parámetros y secretos en AWS SSM Parameter Store</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Pipeline / Config</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div>Consultas AWS</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div>Valores calculados</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Recursos S3</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Glue / Vars</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Drift / Manual</div>
+  </div>
+
+</div>
+</body>
+</html>
